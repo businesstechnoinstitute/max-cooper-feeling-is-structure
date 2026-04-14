@@ -1,0 +1,381 @@
+import { prepareWithSegments, layoutNextLine } from 'https://esm.sh/@chenglou/pretext@0.0.3'
+
+// ── Config ──
+const RADIUS = 55
+const LINE_HEIGHT = 32
+const FONT_STR = '300 21px "Nunito Sans", Arial, Helvetica, sans-serif'
+const COLOR = 'rgb(215, 195, 60)'
+const ITALIC_FONT = 'italic 300 21px "Nunito Sans", Arial, Helvetica, sans-serif'
+const ITALIC_COLOR = 'rgba(215, 195, 60, 0.8)'
+
+// Particle config
+const PARTICLE_COLOR = [180, 160, 30]       // dark gold core
+const PARTICLE_GLOW = [215, 195, 60]        // yellow glow
+const PARTICLE_RADIUS = 8
+const TRAIL_LENGTH = 35
+const TRAIL_FADE_SPEED = 0.97
+
+// ── State ──
+let mouseX = -9999
+let mouseY = -9999
+let smoothMouseX = -9999
+let smoothMouseY = -9999
+let mouseOnPage = false
+
+const entries = []
+const trail = [] // Array of {x, y, alpha, size}
+
+// ── Particle overlay canvas ──
+let overlayCanvas, overlayCtx
+
+function createOverlay() {
+  overlayCanvas = document.createElement('canvas')
+  overlayCanvas.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+  `
+  document.body.appendChild(overlayCanvas)
+  sizeOverlay()
+}
+
+function sizeOverlay() {
+  const dpr = window.devicePixelRatio || 1
+  overlayCanvas.width = window.innerWidth * dpr
+  overlayCanvas.height = window.innerHeight * dpr
+  overlayCtx = overlayCanvas.getContext('2d')
+  overlayCtx.scale(dpr, dpr)
+}
+
+// ── Trail + Particle rendering ──
+function updateTrail() {
+  if (!mouseOnPage) return
+
+  // Add new trail point at smoothed position
+  trail.unshift({
+    x: smoothMouseX,
+    y: smoothMouseY,
+    alpha: 1,
+    size: PARTICLE_RADIUS * 0.7
+  })
+
+  // Cap trail length
+  if (trail.length > TRAIL_LENGTH) trail.length = TRAIL_LENGTH
+
+  // Fade + shrink existing points
+  for (let i = 1; i < trail.length; i++) {
+    trail[i].alpha *= TRAIL_FADE_SPEED
+    trail[i].size *= 0.96
+  }
+}
+
+function renderParticle() {
+  const ctx = overlayCtx
+  const w = window.innerWidth
+  const h = window.innerHeight
+
+  ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0)
+  ctx.clearRect(0, 0, w, h)
+
+  if (!mouseOnPage) return
+
+  // Draw trail (back to front)
+  for (let i = trail.length - 1; i >= 1; i--) {
+    const p = trail[i]
+    if (p.alpha < 0.01) continue
+
+    const t = i / trail.length
+    const [r, g, b] = PARTICLE_GLOW
+
+    // Trail segments
+    ctx.beginPath()
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.5})`
+    ctx.fill()
+
+    // Soft glow on trail
+    ctx.beginPath()
+    ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2)
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.08})`
+    ctx.fill()
+  }
+
+  // Connect trail with a fading line
+  if (trail.length > 2) {
+    ctx.beginPath()
+    ctx.moveTo(trail[0].x, trail[0].y)
+    for (let i = 1; i < trail.length; i++) {
+      if (trail[i].alpha < 0.02) break
+      ctx.lineTo(trail[i].x, trail[i].y)
+    }
+    ctx.strokeStyle = `rgba(${PARTICLE_GLOW[0]}, ${PARTICLE_GLOW[1]}, ${PARTICLE_GLOW[2]}, 0.15)`
+    ctx.lineWidth = 2
+    ctx.stroke()
+  }
+
+  // Main particle — outer glow
+  const gx = smoothMouseX
+  const gy = smoothMouseY
+
+  const outerGlow = ctx.createRadialGradient(gx, gy, 0, gx, gy, PARTICLE_RADIUS * 5)
+  outerGlow.addColorStop(0, `rgba(${PARTICLE_GLOW[0]}, ${PARTICLE_GLOW[1]}, ${PARTICLE_GLOW[2]}, 0.25)`)
+  outerGlow.addColorStop(0.4, `rgba(${PARTICLE_GLOW[0]}, ${PARTICLE_GLOW[1]}, ${PARTICLE_GLOW[2]}, 0.08)`)
+  outerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
+  ctx.beginPath()
+  ctx.arc(gx, gy, PARTICLE_RADIUS * 5, 0, Math.PI * 2)
+  ctx.fillStyle = outerGlow
+  ctx.fill()
+
+  // Main particle — inner glow
+  const innerGlow = ctx.createRadialGradient(gx, gy, 0, gx, gy, PARTICLE_RADIUS * 2)
+  innerGlow.addColorStop(0, `rgba(${PARTICLE_GLOW[0]}, ${PARTICLE_GLOW[1]}, ${PARTICLE_GLOW[2]}, 0.6)`)
+  innerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
+  ctx.beginPath()
+  ctx.arc(gx, gy, PARTICLE_RADIUS * 2, 0, Math.PI * 2)
+  ctx.fillStyle = innerGlow
+  ctx.fill()
+
+  // Main particle — solid core
+  const coreGrad = ctx.createRadialGradient(gx, gy, 0, gx, gy, PARTICLE_RADIUS)
+  coreGrad.addColorStop(0, `rgba(240, 220, 80, 0.95)`)
+  coreGrad.addColorStop(0.5, `rgba(${PARTICLE_COLOR[0]}, ${PARTICLE_COLOR[1]}, ${PARTICLE_COLOR[2]}, 0.9)`)
+  coreGrad.addColorStop(1, `rgba(${PARTICLE_COLOR[0]}, ${PARTICLE_COLOR[1]}, ${PARTICLE_COLOR[2]}, 0.3)`)
+  ctx.beginPath()
+  ctx.arc(gx, gy, PARTICLE_RADIUS, 0, Math.PI * 2)
+  ctx.fillStyle = coreGrad
+  ctx.fill()
+
+  // Bright center dot
+  ctx.beginPath()
+  ctx.arc(gx, gy, 2, 0, Math.PI * 2)
+  ctx.fillStyle = 'rgba(240, 220, 80, 0.9)'
+  ctx.fill()
+}
+
+// ── Text reflow logic ──
+function getCircleHalfWidth(lineY, lineH, circleY, radius) {
+  const bandMid = lineY + lineH / 2
+  const dy = Math.abs(bandMid - circleY)
+  if (dy >= radius) return 0
+  return Math.sqrt(radius * radius - dy * dy)
+}
+
+function layoutText(ctx, prepared, width, mx, my, isItalic, isCentered) {
+  ctx.font = isItalic ? ITALIC_FONT : FONT_STR
+  ctx.fillStyle = isItalic ? ITALIC_COLOR : COLOR
+  ctx.textBaseline = 'alphabetic'
+
+  let textCursor = { segmentIndex: 0, graphemeIndex: 0 }
+  let y = 0
+
+  while (true) {
+    let lineWidth = width
+    let xOffset = 0
+
+    const halfW = getCircleHalfWidth(y, LINE_HEIGHT, my, RADIUS)
+    if (halfW > 0) {
+      const circleLeft = mx - halfW
+      const circleRight = mx + halfW
+
+      // Render left portion (before circle)
+      const leftWidth = Math.max(0, circleLeft)
+      // Render right portion (after circle)
+      const rightWidth = Math.max(0, width - circleRight)
+
+      // Use the larger side for text flow
+      if (leftWidth >= rightWidth) {
+        lineWidth = Math.max(40, leftWidth)
+      } else {
+        xOffset = Math.min(Math.max(0, circleRight), width - 40)
+        lineWidth = Math.max(40, width - xOffset)
+      }
+    }
+
+    lineWidth = Math.max(60, lineWidth)
+
+    const line = layoutNextLine(prepared, textCursor, lineWidth)
+    if (!line) break
+
+    // Radial gradient tint: yellow (close) → blue → green (far)
+    const lineMidY = y + LINE_HEIGHT / 2
+    const distFromCursor = Math.sqrt((mx - width / 2) ** 2 + (my - lineMidY) ** 2)
+    const maxDist = RADIUS * 4
+    const tintStrength = Math.max(0, 1 - distFromCursor / maxDist)
+
+    if (tintStrength > 0.01 && !isItalic) {
+      const t = 1 - tintStrength // 0 = closest, 1 = farthest
+      let r, g, b
+      if (t < 0.4) {
+        // Yellow to blue
+        const p = t / 0.4
+        r = Math.round(215 * (1 - p) + 60 * p)
+        g = Math.round(195 * (1 - p) + 130 * p)
+        b = Math.round(60 * (1 - p) + 200 * p)
+      } else {
+        // Blue to pale green
+        const p = (t - 0.4) / 0.6
+        r = Math.round(60 * (1 - p) + 130 * p)
+        g = Math.round(130 * (1 - p) + 195 * p)
+        b = Math.round(200 * (1 - p) + 140 * p)
+      }
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
+    } else {
+      ctx.fillStyle = isItalic ? ITALIC_COLOR : COLOR
+    }
+
+    let drawX = xOffset
+    if (isCentered) {
+      const textWidth = ctx.measureText(line.text).width
+      drawX = xOffset + (lineWidth - textWidth) / 2
+    }
+    ctx.fillText(line.text, drawX, y + LINE_HEIGHT * 0.75)
+    textCursor = line.end
+    y += LINE_HEIGHT
+  }
+
+  return y
+}
+
+function renderEntry(entry) {
+  const { canvas, ctx, prepared, isItalic, isCentered } = entry
+  const dpr = window.devicePixelRatio || 1
+  const rect = canvas.getBoundingClientRect()
+  const width = entry.width
+
+  const mx = smoothMouseX - rect.left
+  const my = smoothMouseY - rect.top
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr)
+
+  const totalHeight = layoutText(ctx, prepared, width, mx, my, isItalic, isCentered)
+
+  // Resize canvas height if content changed
+  const neededHeight = totalHeight + 8
+  const currentCSSHeight = parseFloat(canvas.style.height)
+  if (Math.abs(neededHeight - currentCSSHeight) > 2) {
+    canvas.height = neededHeight * dpr
+    canvas.style.height = neededHeight + 'px'
+    // Re-render after resize (clears canvas)
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    layoutText(ctx, prepared, width, mx, my, isItalic, isCentered)
+  }
+}
+
+function initEntry(p) {
+  const text = p.textContent.trim()
+  if (!text || text.length < 10) return
+
+  const isItalic = p.classList.contains('credit-line')
+  const font = isItalic ? ITALIC_FONT : FONT_STR
+  const prepared = prepareWithSegments(text, font)
+
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  const dpr = window.devicePixelRatio || 1
+
+  const computed = getComputedStyle(p)
+  canvas.style.display = 'block'
+  canvas.style.marginBottom = computed.marginBottom
+  if (computed.textAlign === 'center' || computed.marginLeft === 'auto') {
+    canvas.style.marginLeft = 'auto'
+    canvas.style.marginRight = 'auto'
+  }
+
+  const width = p.offsetWidth
+
+  let textCursor = { segmentIndex: 0, graphemeIndex: 0 }
+  let lines = 0
+  while (true) {
+    const line = layoutNextLine(prepared, textCursor, width)
+    if (!line) break
+    textCursor = line.end
+    lines++
+  }
+  const height = lines * LINE_HEIGHT + 8
+
+  canvas.width = width * dpr
+  canvas.height = height * dpr
+  canvas.style.width = width + 'px'
+  canvas.style.height = height + 'px'
+
+  p.style.display = 'none'
+  p.parentNode.insertBefore(canvas, p.nextSibling)
+
+  const isCentered = computed.textAlign === 'center'
+  const entry = { canvas, ctx, prepared, width, p, isItalic, isCentered }
+  entries.push(entry)
+  renderEntry(entry)
+}
+
+// ── Main loop ──
+function loop() {
+  smoothMouseX += (mouseX - smoothMouseX) * 0.13
+  smoothMouseY += (mouseY - smoothMouseY) * 0.13
+
+  updateTrail()
+  renderParticle()
+  entries.forEach(renderEntry)
+  requestAnimationFrame(loop)
+}
+
+function handleResize() {
+  const dpr = window.devicePixelRatio || 1
+  sizeOverlay()
+  entries.forEach(entry => {
+    const parent = entry.p.parentElement
+    const width = parent.offsetWidth
+    entry.width = width
+    entry.canvas.width = width * dpr
+    entry.canvas.style.width = width + 'px'
+  })
+}
+
+// ── Hide default cursor via CSS ──
+function injectStyles() {
+  const style = document.createElement('style')
+  style.textContent = `
+    .col-right, .col-right *,
+    .footer-section, .footer-section * {
+      cursor: none !important;
+    }
+  `
+  document.head.appendChild(style)
+}
+
+// ── Init ──
+async function init() {
+  await document.fonts.ready
+
+  injectStyles()
+  createOverlay()
+
+  const paragraphs = document.querySelectorAll('.col-right p, .footer-section p')
+  paragraphs.forEach(initEntry)
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX
+    mouseY = e.clientY
+    mouseOnPage = true
+  })
+
+  document.addEventListener('mouseleave', () => {
+    mouseOnPage = false
+    mouseX = -9999
+    mouseY = -9999
+  })
+
+  window.addEventListener('resize', handleResize)
+
+  requestAnimationFrame(loop)
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init)
+} else {
+  init()
+}
