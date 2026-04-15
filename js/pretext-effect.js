@@ -369,6 +369,29 @@ async function init() {
     mouseY = -9999
   })
 
+  // Touch support — drag the orb on mobile
+  document.addEventListener('touchstart', (e) => {
+    const t = e.touches[0]
+    mouseX = t.clientX
+    mouseY = t.clientY
+    smoothMouseX = t.clientX
+    smoothMouseY = t.clientY
+    mouseOnPage = true
+  }, { passive: true })
+
+  document.addEventListener('touchmove', (e) => {
+    const t = e.touches[0]
+    mouseX = t.clientX
+    mouseY = t.clientY
+    mouseOnPage = true
+  }, { passive: true })
+
+  document.addEventListener('touchend', () => {
+    mouseOnPage = false
+    mouseX = -9999
+    mouseY = -9999
+  })
+
   window.addEventListener('resize', handleResize)
 
   requestAnimationFrame(loop)
