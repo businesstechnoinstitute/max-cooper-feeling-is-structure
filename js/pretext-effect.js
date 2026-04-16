@@ -273,10 +273,13 @@ function renderEntry(entry) {
   const { canvas, ctx, prepared, isItalic, isCentered } = entry
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
-  const width = rect.width
+  const width = entry.width
 
-  const mx = smoothMouseX - rect.left
-  const my = smoothMouseY - rect.top
+  // Scale mouse coords from viewport space to canvas layout space
+  const scaleX = rect.width > 0 ? width / rect.width : 1
+  const scaleY = rect.height > 0 ? (canvas.height / dpr) / rect.height : 1
+  const mx = (smoothMouseX - rect.left) * scaleX
+  const my = (smoothMouseY - rect.top) * scaleY
 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr)
