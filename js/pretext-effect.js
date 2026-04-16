@@ -4,16 +4,46 @@ import { prepareWithSegments, layoutNextLine } from 'https://esm.sh/@chenglou/pr
 const RADIUS = 55
 const LINE_HEIGHT = 32
 const FONT_STR = '300 21px "Nunito Sans", Arial, Helvetica, sans-serif'
-const COLOR = 'rgb(215, 195, 60)'
 const ITALIC_FONT = 'italic 300 21px "Nunito Sans", Arial, Helvetica, sans-serif'
-const ITALIC_COLOR = 'rgba(215, 195, 60, 0.8)'
-
-// Particle config
-const PARTICLE_COLOR = [180, 160, 30]       // dark gold core
-const PARTICLE_GLOW = [215, 195, 60]        // yellow glow
 const PARTICLE_RADIUS = 8
 const TRAIL_LENGTH = 35
 const TRAIL_FADE_SPEED = 0.97
+
+// ── Theme-aware colours ──
+const THEMES = {
+  light: {
+    color: 'rgb(60, 55, 30)',
+    italicColor: 'rgba(60, 55, 30, 0.8)',
+    particleColor: [80, 70, 20],
+    particleGlow: [60, 55, 30],
+    coreHighlight: 'rgba(100, 90, 40, 0.95)',
+    centerDot: 'rgba(100, 90, 40, 0.9)',
+    gradientColors: {
+      near: [60, 55, 30],       // dark brown
+      mid: [40, 80, 130],       // blue
+      far: [50, 100, 60]        // green
+    }
+  },
+  dark: {
+    color: 'rgb(215, 195, 60)',
+    italicColor: 'rgba(215, 195, 60, 0.8)',
+    particleColor: [180, 160, 30],
+    particleGlow: [215, 195, 60],
+    coreHighlight: 'rgba(240, 220, 80, 0.95)',
+    centerDot: 'rgba(240, 220, 80, 0.9)',
+    gradientColors: {
+      near: [215, 195, 60],     // yellow
+      mid: [60, 130, 200],      // blue
+      far: [130, 195, 140]      // pale green
+    }
+  }
+}
+
+function getTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? THEMES.dark : THEMES.light
+}
+
+let currentTheme = getTheme()
 
 // ── State ──
 let mouseX = -9999
@@ -89,7 +119,7 @@ function renderParticle() {
     if (p.alpha < 0.01) continue
 
     const t = i / trail.length
-    const [r, g, b] = PARTICLE_GLOW
+    const [r, g, b] = currentTheme.particleGlow
 
     // Trail segments
     ctx.beginPath()
@@ -112,7 +142,7 @@ function renderParticle() {
       if (trail[i].alpha < 0.02) break
       ctx.lineTo(trail[i].x, trail[i].y)
     }
-    ctx.strokeStyle = `rgba(${PARTICLE_GLOW[0]}, ${PARTICLE_GLOW[1]}, ${PARTICLE_GLOW[2]}, 0.15)`
+    ctx.strokeStyle = `rgba(${currentTheme.particleGlow[0]}, ${currentTheme.particleGlow[1]}, ${currentTheme.particleGlow[2]}, 0.15)`
     ctx.lineWidth = 2
     ctx.stroke()
   }
@@ -122,8 +152,8 @@ function renderParticle() {
   const gy = smoothMouseY
 
   const outerGlow = ctx.createRadialGradient(gx, gy, 0, gx, gy, PARTICLE_RADIUS * 5)
-  outerGlow.addColorStop(0, `rgba(${PARTICLE_GLOW[0]}, ${PARTICLE_GLOW[1]}, ${PARTICLE_GLOW[2]}, 0.25)`)
-  outerGlow.addColorStop(0.4, `rgba(${PARTICLE_GLOW[0]}, ${PARTICLE_GLOW[1]}, ${PARTICLE_GLOW[2]}, 0.08)`)
+  outerGlow.addColorStop(0, `rgba(${currentTheme.particleGlow[0]}, ${currentTheme.particleGlow[1]}, ${currentTheme.particleGlow[2]}, 0.25)`)
+  outerGlow.addColorStop(0.4, `rgba(${currentTheme.particleGlow[0]}, ${currentTheme.particleGlow[1]}, ${currentTheme.particleGlow[2]}, 0.08)`)
   outerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
   ctx.beginPath()
   ctx.arc(gx, gy, PARTICLE_RADIUS * 5, 0, Math.PI * 2)
@@ -132,7 +162,7 @@ function renderParticle() {
 
   // Main particle — inner glow
   const innerGlow = ctx.createRadialGradient(gx, gy, 0, gx, gy, PARTICLE_RADIUS * 2)
-  innerGlow.addColorStop(0, `rgba(${PARTICLE_GLOW[0]}, ${PARTICLE_GLOW[1]}, ${PARTICLE_GLOW[2]}, 0.6)`)
+  innerGlow.addColorStop(0, `rgba(${currentTheme.particleGlow[0]}, ${currentTheme.particleGlow[1]}, ${currentTheme.particleGlow[2]}, 0.6)`)
   innerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
   ctx.beginPath()
   ctx.arc(gx, gy, PARTICLE_RADIUS * 2, 0, Math.PI * 2)
@@ -141,9 +171,9 @@ function renderParticle() {
 
   // Main particle — solid core
   const coreGrad = ctx.createRadialGradient(gx, gy, 0, gx, gy, PARTICLE_RADIUS)
-  coreGrad.addColorStop(0, `rgba(240, 220, 80, 0.95)`)
-  coreGrad.addColorStop(0.5, `rgba(${PARTICLE_COLOR[0]}, ${PARTICLE_COLOR[1]}, ${PARTICLE_COLOR[2]}, 0.9)`)
-  coreGrad.addColorStop(1, `rgba(${PARTICLE_COLOR[0]}, ${PARTICLE_COLOR[1]}, ${PARTICLE_COLOR[2]}, 0.3)`)
+  coreGrad.addColorStop(0, currentTheme.coreHighlight)
+  coreGrad.addColorStop(0.5, `rgba(${currentTheme.particleColor[0]}, ${currentTheme.particleColor[1]}, ${currentTheme.particleColor[2]}, 0.9)`)
+  coreGrad.addColorStop(1, `rgba(${currentTheme.particleColor[0]}, ${currentTheme.particleColor[1]}, ${currentTheme.particleColor[2]}, 0.3)`)
   ctx.beginPath()
   ctx.arc(gx, gy, PARTICLE_RADIUS, 0, Math.PI * 2)
   ctx.fillStyle = coreGrad
@@ -152,7 +182,7 @@ function renderParticle() {
   // Bright center dot
   ctx.beginPath()
   ctx.arc(gx, gy, 2, 0, Math.PI * 2)
-  ctx.fillStyle = 'rgba(240, 220, 80, 0.9)'
+  ctx.fillStyle = currentTheme.centerDot
   ctx.fill()
 }
 
@@ -166,7 +196,7 @@ function getCircleHalfWidth(lineY, lineH, circleY, radius) {
 
 function layoutText(ctx, prepared, width, mx, my, isItalic, isCentered) {
   ctx.font = isItalic ? ITALIC_FONT : FONT_STR
-  ctx.fillStyle = isItalic ? ITALIC_COLOR : COLOR
+  ctx.fillStyle = isItalic ? currentTheme.italicColor : currentTheme.color
   ctx.textBaseline = 'alphabetic'
 
   let textCursor = { segmentIndex: 0, graphemeIndex: 0 }
@@ -208,23 +238,22 @@ function layoutText(ctx, prepared, width, mx, my, isItalic, isCentered) {
 
     if (tintStrength > 0.01 && !isItalic) {
       const t = 1 - tintStrength // 0 = closest, 1 = farthest
+      const gc = currentTheme.gradientColors
       let r, g, b
       if (t < 0.4) {
-        // Yellow to blue
         const p = t / 0.4
-        r = Math.round(215 * (1 - p) + 60 * p)
-        g = Math.round(195 * (1 - p) + 130 * p)
-        b = Math.round(60 * (1 - p) + 200 * p)
+        r = Math.round(gc.near[0] * (1 - p) + gc.mid[0] * p)
+        g = Math.round(gc.near[1] * (1 - p) + gc.mid[1] * p)
+        b = Math.round(gc.near[2] * (1 - p) + gc.mid[2] * p)
       } else {
-        // Blue to pale green
         const p = (t - 0.4) / 0.6
-        r = Math.round(60 * (1 - p) + 130 * p)
-        g = Math.round(130 * (1 - p) + 195 * p)
-        b = Math.round(200 * (1 - p) + 140 * p)
+        r = Math.round(gc.mid[0] * (1 - p) + gc.far[0] * p)
+        g = Math.round(gc.mid[1] * (1 - p) + gc.far[1] * p)
+        b = Math.round(gc.mid[2] * (1 - p) + gc.far[2] * p)
       }
       ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
     } else {
-      ctx.fillStyle = isItalic ? ITALIC_COLOR : COLOR
+      ctx.fillStyle = isItalic ? currentTheme.italicColor : currentTheme.color
     }
 
     let drawX = xOffset
@@ -244,7 +273,7 @@ function renderEntry(entry) {
   const { canvas, ctx, prepared, isItalic, isCentered } = entry
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
-  const width = entry.width
+  const width = rect.width
 
   const mx = smoothMouseX - rect.left
   const my = smoothMouseY - rect.top
@@ -393,6 +422,10 @@ async function init() {
   })
 
   window.addEventListener('resize', handleResize)
+
+  window.addEventListener('themechange', () => {
+    currentTheme = getTheme()
+  })
 
   requestAnimationFrame(loop)
 }

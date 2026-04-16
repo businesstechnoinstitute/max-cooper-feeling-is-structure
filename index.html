@@ -11,6 +11,9 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- Theme toggle -->
+  <button class="theme-toggle" onclick="toggleTheme()">DARK</button>
+
   <!-- Left decorative gradient strip -->
   <div class="left-strip" aria-hidden="true"></div>
 
@@ -250,7 +253,35 @@
     </section>
   </main>
 
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const btn = document.querySelector('.theme-toggle');
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        html.removeAttribute('data-theme');
+        btn.textContent = 'DARK';
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.setAttribute('data-theme', 'dark');
+        btn.textContent = 'LIGHT';
+        localStorage.setItem('theme', 'dark');
+      }
+      // Notify pretext effect of theme change
+      window.dispatchEvent(new CustomEvent('themechange'));
+    }
+    // Restore saved theme
+    (function() {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.addEventListener('DOMContentLoaded', () => {
+          document.querySelector('.theme-toggle').textContent = 'LIGHT';
+        });
+      }
+    })();
+  </script>
   <script src="js/main.js"></script>
-  <script type="module" src="js/pretext-effect.js?v=6"></script>
+  <script type="module" src="js/pretext-effect.js?v=8"></script>
 </body>
 </html>
