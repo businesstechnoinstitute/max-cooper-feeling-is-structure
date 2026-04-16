@@ -51,6 +51,10 @@ let mouseY = -9999
 let smoothMouseX = -9999
 let smoothMouseY = -9999
 let mouseOnPage = false
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+// For mobile: store the orb's page-level position (survives scroll)
+let touchPageX = -9999
+let touchPageY = -9999
 
 const entries = []
 const trail = [] // Array of {x, y, alpha, size}
@@ -401,28 +405,48 @@ async function init() {
     mouseY = -9999
   })
 
-  // Touch support — drag the orb on mobile
-  document.addEventListener('touchstart', (e) => {
-    const t = e.touches[0]
-    mouseX = t.clientX
-    mouseY = t.clientY
-    smoothMouseX = t.clientX
-    smoothMouseY = t.clientY
+  // Touch support — persistent orb on mobile
+  if (isTouchDevice) {
+    // Start orb in centre of viewport on first load
+    touchPageX = window.innerWidth / 2
+    touchPageY = window.innerHeight / 2 + window.scrollY
+    mouseX = touchPageX
+    mouseY = touchPageY - window.scrollY
+    smoothMouseX = mouseX
+    smoothMouseY = mouseY
     mouseOnPage = true
-  }, { passive: true })
 
-  document.addEventListener('touchmove', (e) => {
-    const t = e.touches[0]
-    mouseX = t.clientX
-    mouseY = t.clientY
-    mouseOnPage = true
-  }, { passive: true })
+    document.addEventListener('touchstart', (e) => {
+      const t = e.touches[0]
+      touchPageX = t.clientX
+      touchPageY = t.clientY + window.scrollY
+      mouseX = t.clientX
+      mouseY = t.clientY
+      smoothMouseX = t.clientX
+      smoothMouseY = t.clientY
+    }, { passive: true })
 
-  document.addEventListener('touchend', () => {
-    mouseOnPage = false
-    mouseX = -9999
-    mouseY = -9999
-  })
+    document.addEventListener('touchmove', (e) => {
+      const t = e.touches[0]
+      touchPageX = t.clientX
+      touchPageY = t.clientY + window.scrollY
+      mouseX = t.clientX
+      mouseY = t.clientY
+    }, { passive: true })
+
+    // On touchend — DON'T hide the orb, keep it where it is
+    document.addEventListener('touchend', () => {
+      // Orb stays persistent at last touch position
+    })
+
+    // On scroll, update the orb's viewport position from its page position
+    window.addEventListener('scroll', () => {
+      mouseX = touchPageX
+      mouseY = touchPageY - window.scrollY
+      smoothMouseX = mouseX
+      smoothMouseY = mouseY
+    }, { passive: true })
+  }
 
   window.addEventListener('resize', handleResize)
 
