@@ -350,8 +350,9 @@ function initEntry(p) {
 
 // ── Main loop ──
 function loop() {
-  smoothMouseX += (mouseX - smoothMouseX) * 0.13
-  smoothMouseY += (mouseY - smoothMouseY) * 0.13
+  const lerpFactor = isTouchDevice ? 0.45 : 0.13
+  smoothMouseX += (mouseX - smoothMouseX) * lerpFactor
+  smoothMouseY += (mouseY - smoothMouseY) * lerpFactor
 
   updateTrail()
   renderParticle()
@@ -416,35 +417,41 @@ async function init() {
     smoothMouseY = mouseY
     mouseOnPage = true
 
-    document.addEventListener('touchstart', (e) => {
-      const t = e.touches[0]
+    let isTouching = false
+
+    function applyTouch(t) {
       touchPageX = t.clientX
       touchPageY = t.clientY + window.scrollY
       mouseX = t.clientX
       mouseY = t.clientY
+      // Snap smooth position so orb feels instant under finger
       smoothMouseX = t.clientX
       smoothMouseY = t.clientY
+    }
+
+    document.addEventListener('touchstart', (e) => {
+      isTouching = true
+      applyTouch(e.touches[0])
     }, { passive: true })
 
     document.addEventListener('touchmove', (e) => {
-      const t = e.touches[0]
-      touchPageX = t.clientX
-      touchPageY = t.clientY + window.scrollY
-      mouseX = t.clientX
-      mouseY = t.clientY
+      isTouching = true
+      applyTouch(e.touches[0])
     }, { passive: true })
 
     // On touchend — DON'T hide the orb, keep it where it is
     document.addEventListener('touchend', () => {
-      // Orb stays persistent at last touch position
+      isTouching = false
     })
 
-    // On scroll, update the orb's viewport position from its page position
+    // On scroll, only update orb viewport position if not actively dragging
     window.addEventListener('scroll', () => {
-      mouseX = touchPageX
-      mouseY = touchPageY - window.scrollY
-      smoothMouseX = mouseX
-      smoothMouseY = mouseY
+      if (!isTouching) {
+        mouseX = touchPageX
+        mouseY = touchPageY - window.scrollY
+        smoothMouseX = mouseX
+        smoothMouseY = mouseY
+      }
     }, { passive: true })
   }
 
