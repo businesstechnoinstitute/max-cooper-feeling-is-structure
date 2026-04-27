@@ -170,9 +170,9 @@ h2 {
   font-size: 28px;
   font-weight: 500;
   color: var(--color-text);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.25em;
   margin-bottom: 20px;
-  text-transform: none;
+  text-transform: uppercase;
   word-break: keep-all;
   overflow-wrap: normal;
   hyphens: none;
@@ -242,7 +242,7 @@ p {
 .contents-list a {
   font-size: 22px;
   font-weight: 400;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.2em;
   color: var(--color-text);
   transition: opacity 0.3s;
 }
