@@ -173,6 +173,9 @@ h2 {
   letter-spacing: 0.12em;
   margin-bottom: 20px;
   text-transform: none;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 p {
