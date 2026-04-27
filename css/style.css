@@ -323,6 +323,27 @@ p {
   text-decoration: underline;
 }
 
+/* ===== Live Photo Gallery ===== */
+.live-gallery {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.live-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .live-gallery {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ===== Track Sections ===== */
 .track-section {
   padding-top: 60px;

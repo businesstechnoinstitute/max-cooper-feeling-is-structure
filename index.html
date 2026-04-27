@@ -193,33 +193,24 @@
       </div>
     </section>
 
-    <!-- LIVE SHOW -->
-    <section id="live-show" class="section two-col track-section">
-      <div class="col-left">
-        <h2 class="live-heading">Live Set Up</h2>
-        <h2>LIVE SHOW</h2>
-      </div>
-      <div class="col-right">
-        <p>I wanted to convey the infinite not just musically and in terms of the video content, but also in terms of the physical live show format, using all available natural surfaces within the concert hall, but also two layers of forward screens to yield depth effects. This approach allows me to maximise on visual intensity and try to approach the infinite power and feeling I wanted. But it required some custom live system design to make it a reality.</p>
-        <p>Firstly, I needed a system for running multiple stable and synced visual outputs. Generally touring laptops don't cope well with more than 2 separate visual outputs in my experience, so instead I ran 4 outputs in 1920 x 1080 via a single 4K image, using the AJA HA5 4K splitter. This allowed me to bundle all 4 outputs into a single HDMI 4K 60Hz output which was then split into 4 1080p 60Hz outputs to go to the projectors all tightly synced. But I needed 8 outputs, all driven by my music parameters in Ableton, so I used two visual machines each with 4 1080 outs, both controlled via OSC using Mattijs Kneppers Resolume Dispatcher, Parameter Forwarder and Clip Launcher Max for Live devices. Mattijs was kind enough to edit his existing devices to allow my single Ableton live machine to send duplicated OSC signals to both laptops simultaneously. Because the clip launch position in Ableton corresponds automatically to the clip launch positions in each Resolume machine I could add different clips to each of the 8 visual outputs all triggered from Ableton.</p>
-        <p>In terms of the visual effects, I was mainly happy to have duplicated effects for the two machines receiving the duplicated OSC signals, but for those which I didn't want duplicated, I could simply rely on putting the video clips into slots on dry channels, or with only one of a pair of effects relating to two simultaneous control messages, for example. A large part of my set up relies on having macro control devices in Ableton to which I assign multiple on/off switches to various visual effects. I use param2param Max devices to map through these switch values to macro devices on spare control channels which sit next to Mattijs' Parameter Forwarder devices. This allows me to turn on and off any combination of visual effects on any particular visual output channels, while also having those effects opacity and values synced to filter cut off frequencies (or any parameter I want) in Ableton via more instances of param2param mapping and macro controls next to Parameter Forwarder devices. This allows me to filter in sounds, while with the same control, slowly bringing in any number of different visual changes. I use similar techniques for mapping Lemur controlled live glitch sounds to sudden visual changes.</p>
-        <p>Anything I can control in Ableton can be linked to anything I can control in Resolume like this, and after a lot of time working on how I want each sound control to map to each visual control in terms of XY parameter relationships (ie if audio parameter X fades in, should corresponding visual parameter Y also fade in, and with what sort of curve etc) I have a full jammable AV system all controlled via MIDI into Ableton only, with all visual controls happening automatically downstream. I'm not sure I would recommend setting it up like this for everyone though, it's a pain in the ass to set up with hundreds of parameter mappings and parameter forwarder devices in Ableton, but for me it was a way of building a system whereby I could control of the visual and audio parameters simultaneously without needing separate controls for each. And it was all made possible by Mattijs Kneppers Resolume control devices.</p>
-      </div>
-    </section>
-
-    <!-- BEHIND THE SCENES -->
-    <section id="behind-the-scenes" class="section">
-      <div class="video-container video-full">
-        <iframe src="https://www.youtube.com/embed/vlk6jTW-6KA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-      </div>
-    </section>
-
-    <!-- LIVE AT THE BARBICAN -->
-    <section id="live-at-the-barbican" class="section two-col track-section">
-      <div class="col-left">
-        <h2>LIVE AT THE BARBICAN</h2>
-        <div class="video-container">
-          <iframe src="https://www.youtube.com/embed/owdva7V2M0o" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <!-- LIVE -->
+    <section id="live-show" class="section track-section">
+      <h2>LIVE</h2>
+      <div class="live-gallery">
+        <div class="live-gallery-item">
+          <img src="assets/images/live-1.jpg" alt="Max Cooper live show">
+        </div>
+        <div class="live-gallery-item">
+          <img src="assets/images/live-2.jpg" alt="Max Cooper live show">
+        </div>
+        <div class="live-gallery-item">
+          <img src="assets/images/live-3.jpg" alt="Max Cooper live show">
+        </div>
+        <div class="live-gallery-item">
+          <img src="assets/images/live-4.jpg" alt="Max Cooper live show">
+        </div>
+        <div class="live-gallery-item">
+          <img src="assets/images/live-5.jpg" alt="Max Cooper live show">
         </div>
       </div>
     </section>
