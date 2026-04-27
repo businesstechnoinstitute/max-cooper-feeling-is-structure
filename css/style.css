@@ -58,7 +58,7 @@ body {
   color: var(--color-text);
   background-color: var(--color-bg);
   font-size: 21px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -168,7 +168,7 @@ img {
 h2 {
   font-family: var(--font-primary);
   font-size: 28px;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--color-text);
   letter-spacing: 0.12em;
   margin-bottom: 20px;

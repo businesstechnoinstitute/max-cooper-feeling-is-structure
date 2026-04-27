@@ -3,8 +3,8 @@ import { prepareWithSegments, layoutNextLine } from 'https://esm.sh/@chenglou/pr
 // ── Config ──
 const RADIUS = 55
 const LINE_HEIGHT = 32
-const FONT_STR = '500 21px "Transducer", Arial, Helvetica, sans-serif'
-const ITALIC_FONT = 'italic 500 21px "Transducer", Arial, Helvetica, sans-serif'
+const FONT_STR = '400 21px "Transducer", Arial, Helvetica, sans-serif'
+const ITALIC_FONT = 'italic 400 21px "Transducer", Arial, Helvetica, sans-serif'
 const PARTICLE_RADIUS = 8
 const TRAIL_LENGTH = 35
 const TRAIL_FADE_SPEED = 0.97
