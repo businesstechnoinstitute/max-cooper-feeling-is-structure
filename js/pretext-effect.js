@@ -14,10 +14,12 @@ const THEMES = {
   light: {
     color: 'rgb(60, 55, 30)',
     italicColor: 'rgba(60, 55, 30, 0.8)',
-    particleColor: [80, 70, 20],
-    particleGlow: [60, 55, 30],
-    coreHighlight: 'rgba(100, 90, 40, 0.95)',
-    centerDot: 'rgba(100, 90, 40, 0.9)',
+    particleColor: [210, 175, 35],
+    particleGlow: [210, 175, 35],
+    trailColorNear: [210, 175, 35],   // yellow (close to orb)
+    trailColorFar:  [50, 100, 180],   // blue (tail end)
+    coreHighlight: 'rgba(220, 185, 45, 0.95)',
+    centerDot: 'rgba(220, 185, 45, 0.9)',
     gradientColors: {
       near: [60, 55, 30],       // dark brown
       mid: [40, 80, 130],       // blue
@@ -29,6 +31,8 @@ const THEMES = {
     italicColor: 'rgba(215, 195, 60, 0.8)',
     particleColor: [180, 160, 30],
     particleGlow: [215, 195, 60],
+    trailColorNear: [215, 195, 60],   // yellow
+    trailColorFar:  [60, 130, 200],   // blue
     coreHighlight: 'rgba(240, 220, 80, 0.95)',
     centerDot: 'rgba(240, 220, 80, 0.9)',
     gradientColors: {
@@ -61,6 +65,16 @@ const trail = [] // Array of {x, y, alpha, size}
 
 // ── Particle overlay canvas ──
 let overlayCanvas, overlayCtx
+
+// ── Cursor image ──
+let cursorImage = null
+const ORB_SIZE = 16 // diameter in px
+
+function loadCursorImage() {
+  const img = new Image()
+  img.onload = () => { cursorImage = img }
+  img.src = 'assets/images/max cooper new circle.png'
+}
 
 function createOverlay() {
   overlayCanvas = document.createElement('canvas')
@@ -122,19 +136,24 @@ function renderParticle() {
     const p = trail[i]
     if (p.alpha < 0.01) continue
 
-    const t = i / trail.length
-    const [r, g, b] = currentTheme.particleGlow
+    // Blend trail colour: near (fresh) = trailColorNear, far (old) = trailColorFar
+    const t = i / trail.length  // 0 = newest, 1 = oldest
+    const cn = currentTheme.trailColorNear
+    const cf = currentTheme.trailColorFar
+    const tr = Math.round(cn[0] * (1 - t) + cf[0] * t)
+    const tg = Math.round(cn[1] * (1 - t) + cf[1] * t)
+    const tb = Math.round(cn[2] * (1 - t) + cf[2] * t)
 
     // Trail segments
     ctx.beginPath()
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.5})`
+    ctx.fillStyle = `rgba(${tr}, ${tg}, ${tb}, ${p.alpha * 0.5})`
     ctx.fill()
 
     // Soft glow on trail
     ctx.beginPath()
     ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2)
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.08})`
+    ctx.fillStyle = `rgba(${tr}, ${tg}, ${tb}, ${p.alpha * 0.08})`
     ctx.fill()
   }
 
@@ -146,48 +165,37 @@ function renderParticle() {
       if (trail[i].alpha < 0.02) break
       ctx.lineTo(trail[i].x, trail[i].y)
     }
-    ctx.strokeStyle = `rgba(${currentTheme.particleGlow[0]}, ${currentTheme.particleGlow[1]}, ${currentTheme.particleGlow[2]}, 0.15)`
+    const cn = currentTheme.trailColorNear
+    ctx.strokeStyle = `rgba(${cn[0]}, ${cn[1]}, ${cn[2]}, 0.2)`
     ctx.lineWidth = 2
     ctx.stroke()
   }
 
-  // Main particle — outer glow
+  // Orb position
   const gx = smoothMouseX
   const gy = smoothMouseY
+  const r = ORB_SIZE / 2
 
-  const outerGlow = ctx.createRadialGradient(gx, gy, 0, gx, gy, PARTICLE_RADIUS * 5)
-  outerGlow.addColorStop(0, `rgba(${currentTheme.particleGlow[0]}, ${currentTheme.particleGlow[1]}, ${currentTheme.particleGlow[2]}, 0.25)`)
-  outerGlow.addColorStop(0.4, `rgba(${currentTheme.particleGlow[0]}, ${currentTheme.particleGlow[1]}, ${currentTheme.particleGlow[2]}, 0.08)`)
+  // Soft outer glow aura around the image
+  const gn = currentTheme.trailColorNear
+  const outerGlow = ctx.createRadialGradient(gx, gy, 0, gx, gy, r * 2.5)
+  outerGlow.addColorStop(0, `rgba(${gn[0]}, ${gn[1]}, ${gn[2]}, 0.2)`)
+  outerGlow.addColorStop(0.5, `rgba(${gn[0]}, ${gn[1]}, ${gn[2]}, 0.06)`)
   outerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
   ctx.beginPath()
-  ctx.arc(gx, gy, PARTICLE_RADIUS * 5, 0, Math.PI * 2)
+  ctx.arc(gx, gy, r * 2.5, 0, Math.PI * 2)
   ctx.fillStyle = outerGlow
   ctx.fill()
 
-  // Main particle — inner glow
-  const innerGlow = ctx.createRadialGradient(gx, gy, 0, gx, gy, PARTICLE_RADIUS * 2)
-  innerGlow.addColorStop(0, `rgba(${currentTheme.particleGlow[0]}, ${currentTheme.particleGlow[1]}, ${currentTheme.particleGlow[2]}, 0.6)`)
-  innerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
-  ctx.beginPath()
-  ctx.arc(gx, gy, PARTICLE_RADIUS * 2, 0, Math.PI * 2)
-  ctx.fillStyle = innerGlow
-  ctx.fill()
-
-  // Main particle — solid core
-  const coreGrad = ctx.createRadialGradient(gx, gy, 0, gx, gy, PARTICLE_RADIUS)
-  coreGrad.addColorStop(0, currentTheme.coreHighlight)
-  coreGrad.addColorStop(0.5, `rgba(${currentTheme.particleColor[0]}, ${currentTheme.particleColor[1]}, ${currentTheme.particleColor[2]}, 0.9)`)
-  coreGrad.addColorStop(1, `rgba(${currentTheme.particleColor[0]}, ${currentTheme.particleColor[1]}, ${currentTheme.particleColor[2]}, 0.3)`)
-  ctx.beginPath()
-  ctx.arc(gx, gy, PARTICLE_RADIUS, 0, Math.PI * 2)
-  ctx.fillStyle = coreGrad
-  ctx.fill()
-
-  // Bright center dot
-  ctx.beginPath()
-  ctx.arc(gx, gy, 2, 0, Math.PI * 2)
-  ctx.fillStyle = currentTheme.centerDot
-  ctx.fill()
+  // Draw PNG orb clipped to circle
+  if (cursorImage) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(gx, gy, r, 0, Math.PI * 2)
+    ctx.clip()
+    ctx.drawImage(cursorImage, gx - r, gy - r, ORB_SIZE, ORB_SIZE)
+    ctx.restore()
+  }
 }
 
 // ── Text reflow logic ──
@@ -390,6 +398,7 @@ async function init() {
 
   injectStyles()
   createOverlay()
+  loadCursorImage()
 
   const paragraphs = document.querySelectorAll('.col-right p, .footer-section p')
   paragraphs.forEach(initEntry)
