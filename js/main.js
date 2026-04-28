@@ -11,13 +11,20 @@ document.addEventListener('DOMContentLoaded', function () {
   const prevBtn = carousel.querySelector('.carousel-prev')
   const nextBtn = carousel.querySelector('.carousel-next')
 
-  // Per-slide captions — add text here when ready
-  const captions = [
-    '', '', '', '', '', '', '', '', ''
-  ]
+  // Per-slide captions — fill in when ready
+  const captions = ['', '', '', '', '', '', '', '', '']
 
   let current = 0
   const total = slides.length
+
+  // Size track and slides explicitly in px so transform works reliably
+  function sizeSlides() {
+    const w = viewport.offsetWidth
+    track.style.width = (w * total) + 'px'
+    slides.forEach(s => { s.style.width = w + 'px' })
+  }
+  sizeSlides()
+  window.addEventListener('resize', () => { sizeSlides(); goTo(current) })
 
   // Build dots
   slides.forEach((_, i) => {
@@ -29,7 +36,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function goTo(index) {
     current = (index + total) % total
-    track.style.transform = `translateX(-${current * 100}%)`
+    const w = viewport.offsetWidth
+    track.style.transform = `translateX(-${current * w}px)`
     dotsContainer.querySelectorAll('.carousel-dot').forEach((d, i) => {
       d.classList.toggle('active', i === current)
     })
@@ -39,22 +47,19 @@ document.addEventListener('DOMContentLoaded', function () {
   prevBtn.addEventListener('click', () => goTo(current - 1))
   nextBtn.addEventListener('click', () => goTo(current + 1))
 
-  // Touch / swipe support
-  let startX = 0, startY = 0, dragging = false
+  // Touch swipe
+  let startX = 0, startY = 0
   viewport.addEventListener('touchstart', e => {
     startX = e.touches[0].clientX
     startY = e.touches[0].clientY
-    dragging = true
   }, { passive: true })
 
   viewport.addEventListener('touchend', e => {
-    if (!dragging) return
     const dx = startX - e.changedTouches[0].clientX
     const dy = startY - e.changedTouches[0].clientY
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 35) {
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
       goTo(current + (dx > 0 ? 1 : -1))
     }
-    dragging = false
   }, { passive: true })
 })
 
