@@ -3,11 +3,18 @@ document.addEventListener('DOMContentLoaded', function () {
   const carousel = document.querySelector('.live-carousel')
   if (!carousel) return
 
+  const viewport = carousel.querySelector('.live-carousel-viewport')
   const track = carousel.querySelector('.live-carousel-track')
   const slides = Array.from(carousel.querySelectorAll('.live-carousel-slide'))
   const dotsContainer = carousel.querySelector('.carousel-dots')
+  const caption = carousel.querySelector('.live-caption')
   const prevBtn = carousel.querySelector('.carousel-prev')
   const nextBtn = carousel.querySelector('.carousel-next')
+
+  // Per-slide captions — add text here when ready
+  const captions = [
+    '', '', '', '', '', '', '', '', ''
+  ]
 
   let current = 0
   const total = slides.length
@@ -26,17 +33,28 @@ document.addEventListener('DOMContentLoaded', function () {
     dotsContainer.querySelectorAll('.carousel-dot').forEach((d, i) => {
       d.classList.toggle('active', i === current)
     })
+    if (caption) caption.textContent = captions[current] || ''
   }
 
   prevBtn.addEventListener('click', () => goTo(current - 1))
   nextBtn.addEventListener('click', () => goTo(current + 1))
 
   // Touch / swipe support
-  let startX = 0
-  track.addEventListener('touchstart', e => { startX = e.touches[0].clientX }, { passive: true })
-  track.addEventListener('touchend', e => {
-    const diff = startX - e.changedTouches[0].clientX
-    if (Math.abs(diff) > 40) goTo(current + (diff > 0 ? 1 : -1))
+  let startX = 0, startY = 0, dragging = false
+  viewport.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX
+    startY = e.touches[0].clientY
+    dragging = true
+  }, { passive: true })
+
+  viewport.addEventListener('touchend', e => {
+    if (!dragging) return
+    const dx = startX - e.changedTouches[0].clientX
+    const dy = startY - e.changedTouches[0].clientY
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 35) {
+      goTo(current + (dx > 0 ? 1 : -1))
+    }
+    dragging = false
   }, { passive: true })
 })
 
