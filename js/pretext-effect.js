@@ -198,14 +198,7 @@ function renderParticle() {
   }
 }
 
-// ── Text reflow logic ──
-function getCircleHalfWidth(lineY, lineH, circleY, radius) {
-  const bandMid = lineY + lineH / 2
-  const dy = Math.abs(bandMid - circleY)
-  if (dy >= radius) return 0
-  return Math.sqrt(radius * radius - dy * dy)
-}
-
+// ── Text layout with gradient colouring (no reflow) ──
 function layoutText(ctx, prepared, width, mx, my, isItalic, isCentered) {
   ctx.font = isItalic ? ITALIC_FONT : FONT_STR
   ctx.fillStyle = isItalic ? currentTheme.italicColor : currentTheme.color
@@ -215,41 +208,17 @@ function layoutText(ctx, prepared, width, mx, my, isItalic, isCentered) {
   let y = 0
 
   while (true) {
-    let lineWidth = width
-    let xOffset = 0
-
-    const halfW = getCircleHalfWidth(y, LINE_HEIGHT, my, RADIUS)
-    if (halfW > 0) {
-      const circleLeft = mx - halfW
-      const circleRight = mx + halfW
-
-      // Render left portion (before circle)
-      const leftWidth = Math.max(0, circleLeft)
-      // Render right portion (after circle)
-      const rightWidth = Math.max(0, width - circleRight)
-
-      // Use the larger side for text flow
-      if (leftWidth >= rightWidth) {
-        lineWidth = Math.max(40, leftWidth)
-      } else {
-        xOffset = Math.min(Math.max(0, circleRight), width - 40)
-        lineWidth = Math.max(40, width - xOffset)
-      }
-    }
-
-    lineWidth = Math.max(60, lineWidth)
-
-    const line = layoutNextLine(prepared, textCursor, lineWidth)
+    const line = layoutNextLine(prepared, textCursor, width)
     if (!line) break
 
-    // Radial gradient tint: yellow (close) → blue → green (far)
+    // Radial gradient tint: near colour → mid → far based on distance from cursor
     const lineMidY = y + LINE_HEIGHT / 2
     const distFromCursor = Math.sqrt((mx - width / 2) ** 2 + (my - lineMidY) ** 2)
     const maxDist = RADIUS * 4
     const tintStrength = Math.max(0, 1 - distFromCursor / maxDist)
 
     if (tintStrength > 0.01 && !isItalic) {
-      const t = 1 - tintStrength // 0 = closest, 1 = farthest
+      const t = 1 - tintStrength
       const gc = currentTheme.gradientColors
       let r, g, b
       if (t < 0.4) {
@@ -268,10 +237,10 @@ function layoutText(ctx, prepared, width, mx, my, isItalic, isCentered) {
       ctx.fillStyle = isItalic ? currentTheme.italicColor : currentTheme.color
     }
 
-    let drawX = xOffset
+    let drawX = 0
     if (isCentered) {
       const textWidth = ctx.measureText(line.text).width
-      drawX = xOffset + (lineWidth - textWidth) / 2
+      drawX = (width - textWidth) / 2
     }
     ctx.fillText(line.text, drawX, y + LINE_HEIGHT * 0.75)
     textCursor = line.end
