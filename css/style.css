@@ -567,7 +567,11 @@ p {
   }
 
   .theme-toggle {
-    top: 95px;
+    top: 70px;
+  }
+
+  .left-strip {
+    display: none;
   }
 
   .two-col {
@@ -655,7 +659,7 @@ p {
   }
 
   .theme-toggle {
-    top: 80px;
+    top: 60px;
   }
 
   body {
