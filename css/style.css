@@ -143,6 +143,14 @@ img {
   color: var(--color-text);
 }
 
+.nav-mobile-break {
+  display: none;
+}
+
+.nav-group {
+  white-space: nowrap;
+}
+
 /* ===== Section Layout ===== */
 .section {
   max-width: var(--content-max-width);
@@ -550,6 +558,18 @@ p {
     margin: 0 8px;
   }
 
+  .nav-mobile-break {
+    display: block;
+  }
+
+  .nav-sep-desktop-only {
+    display: none;
+  }
+
+  .theme-toggle {
+    top: 95px;
+  }
+
   .two-col {
     flex-direction: column;
     gap: 20px;
@@ -632,6 +652,10 @@ p {
 
   .nav-separator {
     margin: 0 5px;
+  }
+
+  .theme-toggle {
+    top: 80px;
   }
 
   body {
